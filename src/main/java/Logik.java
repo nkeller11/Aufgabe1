@@ -35,7 +35,8 @@ public class Logik {
             for (int j = 0; j < customers.length; j++) {
                 if (customers[i].getCustomerId().equals(customers[j].getCustomerId()) && i != j) {
                     String hexDifference = hexTimeDifference(String.valueOf(customers[i].getTimestamp()), String.valueOf(customers[j].getTimestamp()));
-                    customerPosts.add(new CustomerPost(customers[i].getCustomerId(), hexDifference.toLong()));
+                    long differenceAsLong = Long.parseLong(hexDifference, 16);
+                    customerPosts.add(new CustomerPost(customers[i].getCustomerId(), differenceAsLong));
                 }
             }
         }
