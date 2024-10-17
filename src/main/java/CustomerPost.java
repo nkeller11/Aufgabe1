@@ -14,7 +14,7 @@ public class CustomerPost {
         this.customerId = customerId;
     }
 
-    public int getConsumption() {
+    public long getConsumption() {
         return consumption;
     }
 

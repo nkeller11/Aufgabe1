@@ -27,7 +27,7 @@ public class Customer{
         this.workloadId = workloadId;
     }
 
-    public int getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
