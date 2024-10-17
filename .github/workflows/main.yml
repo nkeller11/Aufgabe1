@@ -17,6 +17,7 @@ jobs:
     - name: Set up JDK 17
       uses: actions/setup-java@v2
       with:
+        distribution: 'temurin' # oder 'zulu', 'adopt', 'oracle', je nach Bedarf
         java-version: '17'
 
     - name: Set execute permission for gradlew
