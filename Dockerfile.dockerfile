@@ -1,23 +1,36 @@
-# Wähle ein Basis-Image
-FROM gradle:7.6-jdk17 AS builder
+# TODO
+# Use an official Gradle image to build the Spring Boot app
+FROM gradle:8.1.1-jdk17 AS builder
 
-# Setze das Arbeitsverzeichnis
+# Set the working directory inside the container
 WORKDIR /app
 
-# Kopiere die Build-Dateien und das Gradle-Wrapper-Skript
-COPY build.gradle ./
-COPY gradlew ./
-COPY gradle/ ./gradle/ 
-# Kopiere den Quellcode
-COPY src/ ./src/
+# Copy only the gradle build files first to leverage Docker layer caching
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
 
-# Baue die Anwendung (ohne Tests)
-RUN chmod +x gradlew && ./gradlew build -x test
+# Download dependencies before copying the entire project
+RUN gradle build --no-daemon || return 0
 
-# Erstelle das endgültige Image
+# Copy the rest of the application code
+COPY . .
+
+# Build the Spring Boot application
+RUN gradle build --no-daemon
+
+# Use an official OpenJDK runtime as a base image for running the application
 FROM openjdk:17-jdk-slim
+
+RUN apt-get update && apt-get install -y curl
+
+# Set the working directory inside the container
 WORKDIR /app
+
+# Copy the built application from the previous stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Starte die Anwendung
+# Expose the port Spring Boot is running on
+EXPOSE 8080
+
+# Set the entry point for the container to run the Spring Boot application
 ENTRYPOINT ["java", "-jar", "app.jar"]
