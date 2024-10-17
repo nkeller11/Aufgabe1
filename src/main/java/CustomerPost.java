@@ -1,6 +1,6 @@
 public class CustomerPost {
     private String customerId;
-    private int consumption;
+    private long consumption;
     public CustomerPost(String customerId, long consumption) {
         this.customerId = customerId;
         this.consumption = consumption;
