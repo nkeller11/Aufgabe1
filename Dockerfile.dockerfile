@@ -1,11 +1,26 @@
 # Verwende ein Basis-Java-Image
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jdk-slim as builder
 
 # Setze das Arbeitsverzeichnis
 WORKDIR /app
 
-# Kopiere die JAR-Datei in das Image
-COPY target/your-app-name.jar app.jar
+# Kopiere die build.gradle und die settings.gradle
+COPY build.gradle settings.gradle ./
+
+# Kopiere den Quellcode und das Gradle-Wrapper-Skript
+COPY gradle gradle
+COPY src src
+
+# Baue die Anwendung
+RUN ./gradlew build -x test
+
+# Erstelle das endgültige Image
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Kopiere die JAR-Datei aus dem Builder-Image
+COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Exponiere den Port, den die Anwendung verwendet
 EXPOSE 8080
