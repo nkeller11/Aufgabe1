@@ -4,7 +4,7 @@ services:
   cloud-customer-app:
     build:
       context: .
-      dockerfile: Dockerfile.dockerfile # Verweise auf das benannte Dockerfile
+      dockerfile: Dockerfile.dockerfile
     ports:
       - "8080:8080"
     networks:
@@ -13,4 +13,3 @@ services:
 networks:
   cloud-net:
     driver: bridge
-

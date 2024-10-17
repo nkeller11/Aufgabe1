@@ -1,29 +1,24 @@
-# Verwende ein Basis-Java-Image
-FROM openjdk:17-jdk-slim as builder
+# Wähle ein Basis-Image
+FROM gradle:7.6-jdk17 AS builder
 
 # Setze das Arbeitsverzeichnis
 WORKDIR /app
 
-# Kopiere die build.gradle und die settings.gradle
-COPY build.gradle ./
+# Kopiere die Build-Dateien und das Gradle-Wrapper-Skript
+COPY build.gradle settings.gradle ./
+COPY gradlew ./
+COPY gradle/ ./gradle/ # Gradle-Wrapper-Verzeichnis
 
-# Kopiere den Quellcode und das Gradle-Wrapper-Skript
-COPY gradle gradle
-COPY src src
+# Kopiere den Quellcode
+COPY src/ ./src/
 
-# Baue die Anwendung
-RUN ./gradlew build -x test
+# Baue die Anwendung (ohne Tests)
+RUN chmod +x gradlew && ./gradlew build -x test
 
 # Erstelle das endgültige Image
 FROM openjdk:17-jdk-slim
-
 WORKDIR /app
-
-# Kopiere die JAR-Datei aus dem Builder-Image
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Exponiere den Port, den die Anwendung verwendet
-EXPOSE 8080
-
 # Starte die Anwendung
-CMD ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
