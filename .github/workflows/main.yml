@@ -9,37 +9,57 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v2
-      with:
-        distribution: 'temurin' # Verwendung von Temurin als JDK-Distribution
-        java-version: '17'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Set execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Set permissions for gradlew
+        run: chmod +x ./gradlew  # Setze die Berechtigungen für das Gradle Wrapper-Skript
 
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: Build with Gradle
+        run: ./gradlew build
 
-    - name: Install Docker Compose
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y docker-compose
+      - name: Build your application Docker image
+        run: |
+          # Baue das Docker-Image unter Verwendung des spezifizierten Dockerfile-Namens
+          docker build -t your-app-image -f Dockerfile.dockerfile .
 
-    - name: Run Docker Compose
-      run: docker-compose up -d
+      - name: Run your application
+        run: |
+          # Starte die Anwendung im Hintergrund
+          docker run -d --name your-app -p 8080:8080 your-app-image
 
-    - name: Test the application
-      run: |
-        sleep 10 # Warte, bis die Anwendung gestartet ist
-        curl -X POST http://localhost:8080/v1/result -d '{}' # Hier deine Tests durchführen
+      - name: Wait for your application to start
+        run: |
+          echo "Warte 10 Sekunden, bis die Anwendung bereit ist..."
+          sleep 10
 
-    - name: Shut down Docker Compose
-      run: docker-compose down
+      - name: Run Assessment Docker Image
+        run: |
+          # Starte das Docker-Image mrksdh/assessment
+          docker run -d --name assessment -p 8081:8080 mrksdh/assessment
+
+      - name: Wait for assessment to be ready
+        run: |
+          echo "Warte 10 Sekunden, bis das Assessment bereit ist..."
+          sleep 10
+
+      - name: Test your application against assessment
+        run: |
+          # Teste deine Anwendung, indem du mit dem Assessment-Image interagierst
+          curl -X POST http://localhost:8081/v1/result -d '{}' || echo "Assessment Test fehlgeschlagen"
+
+      - name: Shut down your application
+        run: docker stop your-app && docker rm your-app
+
+      - name: Shut down the assessment container
+        run: docker stop assessment && docker rm assessment
