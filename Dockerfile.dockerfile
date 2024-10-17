@@ -5,7 +5,7 @@ FROM gradle:7.6-jdk17 AS builder
 WORKDIR /app
 
 # Kopiere die Build-Dateien und das Gradle-Wrapper-Skript
-COPY build.gradle settings.gradle ./
+COPY build.gradle ./
 COPY gradlew ./
 COPY gradle/ ./gradle/ 
 # Kopiere den Quellcode
