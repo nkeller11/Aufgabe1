@@ -20,7 +20,10 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '17'
-          distribution: 'temurin' # Füge diese Zeile hinzu
+          distribution: 'temurin'
+
+      - name: Set permissions for gradlew
+        run: chmod +x ./gradlew  # Setze die Berechtigungen für das Gradle Wrapper-Skript
 
       - name: Build with Gradle
         run: ./gradlew build
