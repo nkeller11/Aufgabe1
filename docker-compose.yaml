@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  cloud-customer-app:
+    build: .
+    ports:
+      - "8080:8080"
+    networks:
+      - cloud-net
+
+networks:
+  cloud-net:
+    driver: bridge
