@@ -1,5 +1,9 @@
 package com.example.customer;
-
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +13,15 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.client.RestTemplate;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,21 +73,28 @@ public class CustomerProcessor {
     }
 
     @PostMapping("/postCustomerData")
-    public ResponseEntity<String> postCustomerData() {
-        Customer[] customerArray = customers.toArray(new Customer[0]);  // Liste in ein Array umwandeln
-        List<CustomerPost> customerPosts = Logik.giveCustomer(customerArray);  // Berechnung
-
-        try {
-            HttpEntity<List<CustomerPost>> request = new HttpEntity<>(customerPosts);
-
-            // Sende die POST-Anfrage an die URL aus der Umgebungsvariable
-            String response = restTemplate.postForObject(resultServiceUrl, request, String.class);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return null;
+    public ResponseEntity<List<CustomerPost>> postCustomerData(@RequestBody List<CustomerPost> customerPosts) {
+        // Überprüfe, ob die übergebenen Daten gültig sind
+        if (customerPosts == null || customerPosts.isEmpty()) {
+            return ResponseEntity.badRequest().body(Collections.singletonList(new CustomerPost("Error", 0)));
         }
+
+        // Map zur Aggregation der Verbrauchswerte pro CustomerId
+        Map<String, Long> aggregatedConsumption = new HashMap<>();
+
+        // Aggregation der Consumptions
+        for (CustomerPost post : customerPosts) {
+            aggregatedConsumption.merge(post.getCustomerId(), post.getConsumption(), Long::sum);
+        }
+
+        // Erstelle die Ergebnisliste mit aggregierten Daten
+        List<CustomerPost> results = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : aggregatedConsumption.entrySet()) {
+            results.add(new CustomerPost(entry.getKey(), entry.getValue()));
+        }
+
+        // Rückgabe der berechneten Ergebnisse
+        return ResponseEntity.ok(results);
     }
 }
 
