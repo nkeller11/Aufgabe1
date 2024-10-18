@@ -4,37 +4,61 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
-import java.util.List;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus; // Importiere HttpStatus
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.client.RestTemplate;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Collections;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.ArrayList;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Controller
 public class CustomerProcessor {
 
-    private final RestTemplate restTemplate;
+    @Autowired
+    private RestTemplate restTemplate;
+
     private final ObjectMapper objectMapper;
-    List<Customer> customers = new ArrayList<>();
+    private List<Customer> customers = new ArrayList<>();
 
     @Value("${dataset.service.url}")
     private String datasetServiceUrl;
-
-    @Value("${result.service.url}")
-    private String resultServiceUrl;
 
     public CustomerProcessor(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
@@ -45,13 +69,13 @@ public class CustomerProcessor {
     public ResponseEntity<List<Customer>> getCustomers() {
         try {
             customers.clear();
-            // Die Daten als String abrufen
+            // Daten von der externen Quelle abrufen
             String response = restTemplate.getForObject(datasetServiceUrl, String.class);
 
             // JSON-String in JsonNode umwandeln
             JsonNode jsonNode = objectMapper.readTree(response);
 
-            // Durch das 'events' Array iterieren und Customer-Objekte hinzufügen
+            // Events durchlaufen und Customer-Objekte füllen
             for (JsonNode eventNode : jsonNode.get("events")) {
                 Customer customer = new Customer();
                 customer.setCustomerId(eventNode.get("customerId").asText());
@@ -61,43 +85,65 @@ public class CustomerProcessor {
                 customers.add(customer);
             }
 
-            // Die Liste von Customer-Objekten zurückgeben
+            // Customer-Liste zurückgeben
             return ResponseEntity.ok(customers);
         } catch (Exception e) {
-            // Im Fehlerfall eine 500-Fehlermeldung zurückgeben
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            return ResponseEntity.status(500).body(null);
         }
     }
 
     @PostMapping("/postCustomerData")
-    public ResponseEntity<Map<String, List<CustomerPost>>> postCustomerData(@RequestBody List<CustomerPost> customerPosts) {
-        // Überprüfe, ob die übergebenen Daten gültig sind
-        if (customerPosts == null || customerPosts.isEmpty()) {
-            return ResponseEntity.badRequest().body(null);  // Überarbeiten, um null oder eine leere Liste zu vermeiden
+    public ResponseEntity<Map<String, List<CustomerPost>>> postCustomerData(@RequestBody List<Customer> customers) {
+        if (customers == null || customers.isEmpty()) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("result", Collections.singletonList(new CustomerPost("Error", 0))));
         }
 
-        // Map zur Aggregation der Verbrauchswerte pro CustomerId
+        // Map für den Verbrauch pro Kunde
         Map<String, Long> aggregatedConsumption = new HashMap<>();
 
-        // Aggregation der Consumptions
-        for (CustomerPost post : customerPosts) {
-            aggregatedConsumption.merge(post.getCustomerId(), post.getConsumption(), Long::sum);
+        // Liste zur Rückgabe
+        List<CustomerPost> results = new ArrayList<>();
+
+        // Maps zur Speicherung von Start- und Stop-Zeitpunkten
+        Map<String, Long> startTimestamps = new HashMap<>(); // Korrigierter Name
+
+        // Events pro workloadId durchlaufen und Verbrauch berechnen
+        for (Customer customer : customers) {
+            if ("start".equalsIgnoreCase(customer.getEventType())) {
+                // Speichere den Start-Zeitstempel
+                startTimestamps.put(customer.getWorkloadId(), customer.getTimestamp());
+            } else if ("stop".equalsIgnoreCase(customer.getEventType()) && startTimestamps.containsKey(customer.getWorkloadId())) {
+                // Berechne den Verbrauch zwischen Start und Stop
+                long startTimestamp = startTimestamps.get(customer.getWorkloadId());
+                long stopTimestamp = customer.getTimestamp();
+
+                long consumptionValue = calculateConsumption(startTimestamp, stopTimestamp);
+                aggregatedConsumption.merge(customer.getCustomerId(), consumptionValue, Long::sum);
+            }
         }
 
-        // Erstelle die Ergebnisliste mit aggregierten Daten
-        List<CustomerPost> results = new ArrayList<>();
+        // Ergebnisliste erstellen
         for (Map.Entry<String, Long> entry : aggregatedConsumption.entrySet()) {
             results.add(new CustomerPost(entry.getKey(), entry.getValue()));
         }
 
-        // Erstelle das endgültige Rückgabeformat
+        // Rückgabe der berechneten Ergebnisse in der "result"-Liste
         Map<String, List<CustomerPost>> response = new HashMap<>();
         response.put("result", results);
-
-        // Rückgabe der berechneten Ergebnisse im richtigen Format
         return ResponseEntity.ok(response);
     }
 
+    // Verbrauchsberechnungsmethode, die den Zeitunterschied zwischen Start und Stop berechnet
+    private long calculateConsumption(Long startTimestamp, Long stopTimestamp) {
+        // Unix-Timestamps in LocalDateTime konvertieren
+        LocalDateTime startDateTime = Instant.ofEpochMilli(startTimestamp)
+                .atZone(ZoneId.systemDefault()).toLocalDateTime();
+        LocalDateTime stopDateTime = Instant.ofEpochMilli(stopTimestamp)
+                .atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        // Differenz zwischen Start- und Stop-Zeit berechnen (z.B. in Sekunden)
+        return ChronoUnit.SECONDS.between(startDateTime, stopDateTime);
+    }
 }
 
 
