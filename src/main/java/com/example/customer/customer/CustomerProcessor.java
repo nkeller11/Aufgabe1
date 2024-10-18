@@ -4,10 +4,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
+import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus; // Importiere HttpStatus
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,14 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-
 
 import java.util.ArrayList;
-import java.util.List;
 
 @Controller
 public class CustomerProcessor {
@@ -68,15 +65,15 @@ public class CustomerProcessor {
             return ResponseEntity.ok(customers);
         } catch (Exception e) {
             // Im Fehlerfall eine 500-Fehlermeldung zurückgeben
-            return null;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @PostMapping("/postCustomerData")
-    public ResponseEntity<List<CustomerPost>> postCustomerData(@RequestBody List<CustomerPost> customerPosts) {
+    public ResponseEntity<Map<String, List<CustomerPost>>> postCustomerData(@RequestBody List<CustomerPost> customerPosts) {
         // Überprüfe, ob die übergebenen Daten gültig sind
         if (customerPosts == null || customerPosts.isEmpty()) {
-            return ResponseEntity.badRequest().body(Collections.singletonList(new CustomerPost("Error", 0)));
+            return ResponseEntity.badRequest().body(null);  // Überarbeiten, um null oder eine leere Liste zu vermeiden
         }
 
         // Map zur Aggregation der Verbrauchswerte pro CustomerId
@@ -93,10 +90,19 @@ public class CustomerProcessor {
             results.add(new CustomerPost(entry.getKey(), entry.getValue()));
         }
 
-        // Rückgabe der berechneten Ergebnisse
-        return ResponseEntity.ok(results);
+        // Erstelle das endgültige Rückgabeformat
+        Map<String, List<CustomerPost>> response = new HashMap<>();
+        response.put("result", results);
+
+        // Rückgabe der berechneten Ergebnisse im richtigen Format
+        return ResponseEntity.ok(response);
     }
+
 }
+
+
+
+
 
 
 
