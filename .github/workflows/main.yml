@@ -31,7 +31,7 @@ jobs:
       - name: Build your application Docker image
         run: |
           # Baue das Docker-Image unter Verwendung des spezifizierten Dockerfile-Namens
-          docker build -t your-app-image -f Dockerfile.dockerfile .
+          docker build -t your-app-image -f Dockerfile .
 
       - name: Run your application
         run: |
