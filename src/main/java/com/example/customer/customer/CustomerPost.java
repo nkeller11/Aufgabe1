@@ -1,3 +1,4 @@
+package com.example.customer;
 public class CustomerPost {
     private String customerId;
     private long consumption;

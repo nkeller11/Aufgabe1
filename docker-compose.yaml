@@ -1,15 +1,37 @@
-version: '3.8'
-
+version: "3.8"
 services:
-  cloud-customer-app:
-    build:
-      context: .
-      dockerfile: Dockerfile.dockerfile
+  list:
+    build: .
     ports:
-      - "8080:8080"
+      - "7979:7979"  # Port 7979 für den List-Service
+    environment:
+      - SERVER_PORT=7979
+      - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst
     networks:
-      - cloud-net
+      - example
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7979/getCustomers || exit 1"]
+      interval: 2s
+      timeout: 5s
+      start_period: 2s
+      retries: 5
+
+  assessment:  # Hier ist der Dataset-Dienst
+    image: mrksdh/assessment
+    ports:
+      - "8080:8080"  # Port Mapping für den Assessment-Service
+    networks:
+      - example
+
+  curl:
+    image: curlimages/curl
+    depends_on:
+      list:
+        condition: service_healthy
+    networks:
+      - example
+    command: ["curl", "-L", "-v", "http://list:7979/getCustomers"]
 
 networks:
-  cloud-net:
+  example:
     driver: bridge

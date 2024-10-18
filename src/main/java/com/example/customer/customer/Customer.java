@@ -1,8 +1,12 @@
+package com.example.customer;
 public class Customer{
     private String customerId;
     private String workloadId;
     private long timestamp;
     private String eventType;
+
+    public Customer() {
+    }
 
     public Customer(String customerId, String workloadId, long timestamp, String eventType){
         this.customerId = customerId;

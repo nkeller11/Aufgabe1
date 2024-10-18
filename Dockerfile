@@ -6,7 +6,7 @@ FROM gradle:8.1.1-jdk17 AS builder
 WORKDIR /app
 
 # Copy only the gradle build files first to leverage Docker layer caching
-COPY build.gradle ./
+COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 
 # Download dependencies before copying the entire project
@@ -30,7 +30,7 @@ WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Expose the port Spring Boot is running on
-EXPOSE 8080
+EXPOSE 7979
 
 # Set the entry point for the container to run the Spring Boot application
 ENTRYPOINT ["java", "-jar", "app.jar"]

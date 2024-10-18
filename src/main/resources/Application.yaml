@@ -1,2 +1,7 @@
-#server:
-#  port : 8080
+# Konfiguration für den Server
+server:
+  port: 7979  # Der Server läuft auf Port 7979
+# Konfiguration für den Dataset-Dienst
+dataset:
+  service:
+    url: ${DATASET_SERVICE_URL}  # Verwende die Umgebungsvariable
