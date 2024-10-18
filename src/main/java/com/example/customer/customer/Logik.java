@@ -1,30 +1,55 @@
 package com.example.customer;
-import java.time.LocalTime;
-import java.time.Duration;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
 
 public class Logik {
 
+    // Methode zur Berechnung der Zeitdifferenz zwischen zwei Timestamps
     public static long hexTimeDifference(long time1, long time2) {
-        long diffInMillis = Math.abs(time1 - time2);
-        long hours = (diffInMillis / (1000 * 60 * 60)) % 24;
-        long minutes = (diffInMillis / (1000 * 60)) % 60;
-        long seconds = (diffInMillis / 1000) % 60;
-        return diffInMillis;
+        return Math.abs(time1 - time2); // Berechnung der Differenz in Millisekunden
     }
 
+    // Methode zur Berechnung der Gesamtzeit pro Customer
     public static List<CustomerPost> giveCustomer(Customer[] customers) {
-        List<CustomerPost> customerPosts = new ArrayList<>();
-        for (int i = 0; i < customers.length; i++) {
-            for (int j = 0; j < customers.length; j++) {
-                if (customers[i].getCustomerId().equals(customers[j].getCustomerId()) && i != j) {
-                    long differenceAsLong = hexTimeDifference(customers[i].getTimestamp(),customers[j].getTimestamp());
-                    customerPosts.add(new CustomerPost(customers[i].getCustomerId(), differenceAsLong));
+        // Map zur Speicherung der Gesamtnutzungsdauer pro Customer (CustomerId -> Gesamtnutzungsdauer)
+        Map<String, Long> customerTotalTimes = new HashMap<>();
+
+        // Map zur temporären Speicherung der Start-Ereignisse nach WorkloadId
+        Map<String, Customer> workloadStartEvents = new HashMap<>();
+
+        // Durchlaufen aller Kundenereignisse
+        for (Customer customer : customers) {
+            String customerId = customer.getCustomerId();
+            String workloadId = customer.getWorkloadId();
+            String eventType = customer.getEventType();
+
+            // Wenn es ein "start"-Ereignis ist, merken wir uns das Ereignis basierend auf der workloadId
+            if ("start".equals(eventType)) {
+                workloadStartEvents.put(workloadId, customer);
+            }
+
+            // Wenn es ein "stop"-Ereignis ist, berechnen wir die Differenz zum passenden "start"-Ereignis
+            if ("stop".equals(eventType)) {
+                Customer startEvent = workloadStartEvents.get(workloadId);
+                if (startEvent != null) {
+                    // Berechne die Zeitdifferenz zwischen "start" und "stop"
+                    long timeDifference = hexTimeDifference(startEvent.getTimestamp(), customer.getTimestamp());
+
+                    // Addiere die Zeitdifferenz zur Gesamtnutzungsdauer des Kunden
+                    customerTotalTimes.put(customerId, customerTotalTimes.getOrDefault(customerId, 0L) + timeDifference);
+
+                    // Entferne das verarbeitete Start-Ereignis
+                    workloadStartEvents.remove(workloadId);
                 }
             }
         }
-        return customerPosts;
+
+        // Erstelle eine Liste von CustomerPost Objekten mit den Gesamtnutzungszeiten
+        List<CustomerPost> customerPosts = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : customerTotalTimes.entrySet()) {
+            customerPosts.add(new CustomerPost(entry.getKey(), entry.getValue()));
+        }
+
+        return customerPosts; // Rückgabe der berechneten Ergebnisse
     }
 }

@@ -4,4 +4,4 @@ server:
 # Konfiguration für den Dataset-Dienst
 dataset:
   service:
-    url: ${DATASET_SERVICE_URL}  # Verwende die Umgebungsvariable
+    url: ${DATASET_SERVICE_URL} # Verwende die Umgebungsvariable
