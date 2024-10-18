@@ -28,19 +28,22 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Build your application Docker image
+      - name: Install Docker Compose
         run: |
-          docker build -t your-app-image -f Dockerfile .
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
 
-      - name: Run your application
-        run: |
-          docker run -d --name your-app -p 7979:7979 your-app-image
+      - name: Build Docker images with Docker Compose
+        run: docker-compose build
 
-      - name: Wait for your application to start
+      - name: Start services with Docker Compose
+        run: docker-compose up -d
+
+      - name: Wait for your application to be ready
         run: |
-          echo "Warte 10 Sekunden, bis die Anwendung bereit ist..."
-          sleep 10
-          # Alternativ kannst du den Status mit curl überprüfen
+          echo "Warte 30 Sekunden, bis die Anwendung bereit ist..."
+          sleep 30
+          # Optional: Überprüfen, ob die Anwendung bereit ist
           for i in {1..10}; do
             if curl -s http://localhost:7979/health; then
               echo "Anwendung ist bereit."
@@ -49,15 +52,6 @@ jobs:
             echo "Warte auf die Anwendung..."
             sleep 10
           done
-
-      - name: Run Assessment Docker Image
-        run: |
-          docker run -d --name assessment -p 8080:8080 mrksdh/assessment
-
-      - name: Wait for assessment to be ready
-        run: |
-          echo "Warte 10 Sekunden, bis das Assessment bereit ist..."
-          sleep 10
 
       - name: Test your application against assessment
         run: |
@@ -68,8 +62,5 @@ jobs:
             exit 1
           fi
 
-      - name: Shut down your application
-        run: docker stop your-app && docker rm your-app
-
-      - name: Shut down the assessment container
-        run: docker stop assessment && docker rm assessment
+      - name: Shut down Docker Compose services
+        run: docker-compose down
