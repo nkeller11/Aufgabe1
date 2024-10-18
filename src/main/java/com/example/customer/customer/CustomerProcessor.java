@@ -23,8 +23,8 @@ public class CustomerProcessor {
     @Value("${dataset.service.url}")
     private String datasetServiceUrl;
 
-    /*@Value("${result.service.url}")
-    private String resultServiceUrl;*/
+    @Value("${result.service.url}")
+    private String resultServiceUrl;
 
     public CustomerProcessor(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
@@ -68,7 +68,7 @@ public class CustomerProcessor {
             HttpEntity<List<CustomerPost>> request = new HttpEntity<>(customerPosts);
 
             // Sende die POST-Anfrage an die URL aus der Umgebungsvariable
-            String response = restTemplate.postForObject(datasetServiceUrl, request, String.class);
+            String response = restTemplate.postForObject(resultServiceUrl, request, String.class);
 
             return ResponseEntity.ok(response);
 

@@ -5,3 +5,6 @@ server:
 dataset:
   service:
     url: ${DATASET_SERVICE_URL} # Verwende die Umgebungsvariable
+result:
+  service:
+    url: ${RESULT_SERVICE_URL} # Verwende die Umgebungsvariable

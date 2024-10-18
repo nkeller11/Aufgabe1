@@ -7,6 +7,8 @@ services:
     environment:
       - SERVER_PORT=7979
       - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst
+      - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Dataset-Dienst
+
 
     networks:
       - example
