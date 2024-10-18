@@ -66,7 +66,7 @@ public class CustomerProcessor {
     }
 
     @GetMapping("/getCustomers")
-    public ResponseEntity<List<Customer>> getCustomers() {
+    public ResponseEntity<Map<String, List<Customer>>> getCustomers() {
         try {
             customers.clear();
             // Daten von der externen Quelle abrufen
@@ -86,7 +86,10 @@ public class CustomerProcessor {
             }
 
             // Customer-Liste zurückgeben
-            return ResponseEntity.ok(customers);
+            //return ResponseEntity.ok(customers);
+            Map<String, List<Customer>> antwort= new HashMap<>();
+            antwort.put("events", customers);
+            return ResponseEntity.ok(antwort);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
         }
