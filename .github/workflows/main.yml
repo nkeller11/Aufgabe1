@@ -31,7 +31,7 @@ jobs:
       - name: Build Docker images
         run: |
           # Bau das Docker-Image für den Assessment-Service
-          docker build -t your_assessment_image ./path/to/assessment  # Ersetze durch den korrekten Pfad
+          docker build -t your_assessment_image mrksdh/assessment  # Ersetze durch den korrekten Pfad
           
           # Bau das Docker-Image für den List-Service
           docker build -t your_list_image ./path/to/list  # Ersetze durch den korrekten Pfad
