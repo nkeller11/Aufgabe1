@@ -34,10 +34,7 @@ jobs:
           sudo apt-get install -y docker-compose
 
       - name: Build Docker images with Docker Compose
-        run: docker-compose build
-
-      - name: Start Docker Compose services
-        run: docker-compose up -d assessment list  # Starte sowohl assessment als auch list
+        run: docker-compose up --build
 
       - name: Wait for the services to be ready
         run: |
