@@ -32,14 +32,10 @@ services:
         condition: service_healthy
     networks:
       - example
-    entrypoint: [ "sh", "-c" ]  # Nutze die Shell, um mehrere Befehle auszuführen
+    entrypoint: [ "sh", "-c" ]
     command: >
-      echo 'Executing GET request...' && \
-      response_get=$(curl -L -s -w "%{http_code}" -o /dev/null http://list:7979/getCustomers) && \
-      echo 'GET Response Code: ' $response_get && \
-      echo 'Executing POST request...' && \
-      response_post=$(curl -X POST -L -s -w "%{http_code}" -o /dev/null http://list:7979/postCustomerData -d '{}') && \
-      echo 'POST Response Code: ' $response_post
+      curl -L -s http://list:7979/getCustomers && \
+      curl -X POST -L -s http://list:7979/postCustomerData -d '{}'
 
 networks:
   example:
