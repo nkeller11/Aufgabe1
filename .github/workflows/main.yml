@@ -28,29 +28,14 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Build your application Docker image
+      - name: Build your application Docker image using Docker Compose
         run: |
-          # Build the Docker image using the specified Dockerfile name
-          docker build -t your-app-image -f Dockerfile .
-
-      - name: Run your application
-        run: |
-          # Start the application in the background
-          docker run -d --name your-app -p 7979:7979 your-app-image
+          # Build and start your application and services defined in docker-compose.yml
+          docker-compose up -d --build  # Start services in detached mode and build images if necessary
 
       - name: Wait for your application to start
         run: |
           echo "Waiting 10 seconds for the application to be ready..."
-          sleep 10
-
-      - name: Run Assessment Docker Image
-        run: |
-          # Start the Docker image mrksdh/assessment
-          docker run -d --name assessment -p 8080:8080 mrksdh/assessment
-
-      - name: Wait for assessment to be ready
-        run: |
-          echo "Waiting 10 seconds for the assessment to be ready..."
           sleep 10
 
       - name: Test your application against assessment
@@ -62,10 +47,7 @@ jobs:
             exit 1
           fi
 
-      - name: Shut down your application
+      - name: Shut down Docker containers
         run: |
-          docker stop your-app && docker rm your-app
-
-      - name: Shut down the assessment container
-        run: |
-          docker stop assessment && docker rm assessment
+          # Stop and remove all containers defined in docker-compose.yml
+          docker-compose down
