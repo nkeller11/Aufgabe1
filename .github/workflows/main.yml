@@ -70,11 +70,3 @@ jobs:
       - name: Shut down the assessment container
         run: |
           docker stop assessment && docker rm assessment
-: $response_post"
-            exit 1
-          fi
-
-      - name: Shut down Docker containers
-        run: |
-          docker stop assessment list  # Stoppe die Container
-          docker rm assessment list  # Entferne die Container
