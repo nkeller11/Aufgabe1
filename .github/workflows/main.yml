@@ -64,11 +64,11 @@ jobs:
       - name: Test your application against assessment
         run: |
           echo "Executing GET request..."
-          curl -s http://localhost:7979/getCustomers  # Führe GET-Anfrage aus
+          curl -s http://list:7979/getCustomers  # Führe GET-Anfrage aus
           
           echo "Executing POST request..."
-          # Hier verwenden wir localhost anstelle von host.docker.internal
-          response=$(curl -X POST http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
+          # POST-Anfrage an die korrekte URL
+          response=$(curl -X POST http://list:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
           echo "POST Response: $response"  # Ausgabe der Antwort
 
           # Hier die Bedingung anpassen, um die Ausgabe zu überprüfen
