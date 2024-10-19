@@ -36,20 +36,34 @@ jobs:
       - name: Build Docker images with Docker Compose
         run: docker-compose build
 
-      - name: Start services with Docker Compose
-        run: docker-compose up -d
+      - name: Start assessment service with Docker Compose
+        run: docker-compose up -d assessment
 
-      - name: Wait for your application to be ready
+      - name: Wait for assessment service to be ready
         run: |
-          echo "Warte 30 Sekunden, bis die Anwendung bereit ist..."
-          sleep 30
+          echo "Warte auf den Assessment-Service, bis er bereit ist..."
+          for i in {1..10}; do
+              if curl -s http://localhost:8080/v1/dataset; then
+                echo "Assessment-Service ist bereit."
+                break
+              fi
+              echo "Warte auf den Assessment-Service..."
+              sleep 10
+          done
+
+      - name: Start list service with Docker Compose
+        run: docker-compose up -d list
+
+      - name: Wait for your list application to be ready
+        run: |
+          echo "Warte auf den List-Service, bis er bereit ist..."
           for i in {1..10}; do
               if curl -s http://localhost:7979/getCustomers; then
-          echo "Anwendung ist bereit."
-          break
-          fi
-          echo "Warte auf die Anwendung..."
-          sleep 10
+                echo "List-Service ist bereit."
+                break
+              fi
+              echo "Warte auf den List-Service..."
+              sleep 10
           done
 
       - name: Test your application against assessment
