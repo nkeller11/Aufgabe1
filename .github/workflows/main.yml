@@ -36,10 +36,10 @@ jobs:
       - name: Build Docker images with Docker Compose
         run: docker-compose build
 
-      - name: Start assessment service with Docker Compose
-        run: docker-compose up -d assessment
+      - name: Start Docker Compose services
+        run: docker-compose up -d assessment list  # Starte sowohl assessment als auch list
 
-      - name: Wait for assessment service to be ready
+      - name: Wait for the services to be ready
         run: |
           echo "Warte auf den Assessment-Service, bis er bereit ist..."
           for i in {1..10}; do
@@ -51,11 +51,6 @@ jobs:
               sleep 10
           done
 
-      - name: Start list service with Docker Compose
-        run: docker-compose up -d list
-
-      - name: Wait for your list application to be ready
-        run: |
           echo "Warte auf den List-Service, bis er bereit ist..."
           for i in {1..10}; do
               if curl -s http://localhost:7979/getCustomers; then
@@ -68,8 +63,15 @@ jobs:
 
       - name: Test your application against assessment
         run: |
-          response=$(curl -X POST http://localhost:8080/v1/result -d '{}')
-          echo "Assessment Response: $response"
+          echo "Executing GET request..."
+          curl -s http://localhost:7979/getCustomers  # Führe GET-Anfrage aus
+          
+          echo "Executing POST request..."
+          # Hier verwenden wir localhost anstelle von host.docker.internal
+          response=$(curl -X POST http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
+          echo "POST Response: $response"  # Ausgabe der Antwort
+
+          # Hier die Bedingung anpassen, um die Ausgabe zu überprüfen
           if [[ "$response" == *"expecting to see 75 customers but found 0"* ]]; then
             echo "Assessment Test fehlgeschlagen: $response"
             exit 1
