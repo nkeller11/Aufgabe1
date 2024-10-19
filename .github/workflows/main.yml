@@ -46,11 +46,11 @@ jobs:
       - name: Retrieve and post customer data
         run: |
           # Retrieve customer data from the application
-          customer_data=$(curl -L -s http://list:7979/getCustomers)
+          customer_data=$(curl -L -s http://localhost:7979/getCustomers)
           echo "Retrieved customer data: $customer_data"  # Log the retrieved customer data
 
           # Post customer data to your application's postCustomerData endpoint
-          response_post=$(curl -X POST -L -s http://list:7979/postCustomerData -d "$customer_data")
+          response_post=$(curl -X POST -L -s http://localhost:7979/postCustomerData -d "$customer_data")
           echo "Response from postCustomerData: $response_post"  # Log the response for debugging
 
       - name: Test your application against assessment
