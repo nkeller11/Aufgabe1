@@ -28,13 +28,21 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Install Docker Compose
+      - name: Build Docker images
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+          # Bau das Docker-Image für den Assessment-Service
+          docker build -t your_assessment_image ./path/to/assessment  # Ersetze durch den korrekten Pfad
+          
+          # Bau das Docker-Image für den List-Service
+          docker build -t your_list_image ./path/to/list  # Ersetze durch den korrekten Pfad
 
-      - name: Build Docker images with Docker Compose
-        run: docker-compose up --build
+      - name: Start Docker containers
+        run: |
+          # Starte den Assessment-Service
+          docker run -d --name assessment -p 8080:8080 your_assessment_image
+          
+          # Starte den List-Service
+          docker run -d --name list -p 7979:7979 your_list_image
 
       - name: Wait for the services to be ready
         run: |
@@ -58,7 +66,7 @@ jobs:
               sleep 10
           done
 
-      - name: Test your application against assessment
+      - name: Execute tests with curl
         run: |
           echo "Executing GET request..."
           response_get=$(curl -s http://localhost:7979/getCustomers)  # Führe GET-Anfrage aus
@@ -68,11 +76,13 @@ jobs:
           response_post=$(curl -X POST -s http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
           echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
 
-          # Hier die Bedingung anpassen, um die Ausgabe zu überprüfen
+          # Überprüfe die Antwort des POST-Requests
           if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
             echo "Assessment Test fehlgeschlagen: $response_post"
             exit 1
           fi
 
-      - name: Shut down Docker Compose services
-        run: docker-compose down
+      - name: Shut down Docker containers
+        run: |
+          docker stop assessment list  # Stoppe die Container
+          docker rm assessment list  # Entferne die Container
