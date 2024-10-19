@@ -6,12 +6,28 @@ services:
       - "7979:7979"  # Port 7979 für den List-Service
     environment:
       - SERVER_PORT=7979
-      - DATASET_SERVICE_URL=http://host.docker.internal:8080/v1/dataset  # URL für den Dataset-Dienst
-      - RESULT_SERVICE_URL=http://host.docker.internal:8080/v1/result  # URL für den Dataset-Dienst
+      - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst im Netzwerk
+      - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Dataset-Dienst im Netzwerk
+    networks:
+      - example
+    depends_on:
+      assessment:  # Sicherstellen, dass assessment zuerst gestartet wird
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7979/getCustomers || exit 1"]
+      interval: 2s
+      timeout: 5s
+      start_period: 2s
+      retries: 5
+
+  assessment:  # Hinzufügen des assessment-Dienstes
+    image: mrksdh/assessment
+    ports:
+      - "8080:8080"
     networks:
       - example
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:7979/getCustomers || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/v1/dataset || exit 1"]
       interval: 2s
       timeout: 5s
       start_period: 2s
