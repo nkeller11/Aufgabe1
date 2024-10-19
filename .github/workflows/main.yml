@@ -28,21 +28,21 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Build Docker images
+      - name: Pull Docker images
         run: |
-          # Bau das Docker-Image für den Assessment-Service
-          docker build -t your_assessment_image mrksdh/assessment  # Ersetze durch den korrekten Pfad
+          # Ziehe das Docker-Image für den Assessment-Service
+          docker pull mrksdh/assessment
           
-          # Bau das Docker-Image für den List-Service
-          docker build -t your_list_image ./path/to/list  # Ersetze durch den korrekten Pfad
+          # Ziehe das Docker-Image für den List-Service (bitte entsprechend anpassen)
+          docker pull your_list_image  # Ersetze durch den tatsächlichen Namen des List-Service-Images
 
       - name: Start Docker containers
         run: |
           # Starte den Assessment-Service
-          docker run -d --name assessment -p 8080:8080 your_assessment_image
+          docker run -d --name assessment -p 8080:8080 mrksdh/assessment
           
           # Starte den List-Service
-          docker run -d --name list -p 7979:7979 your_list_image
+          docker run -d --name list -p 7979:7979 your_list_image  # Ersetze durch den tatsächlichen Namen des List-Service-Images
 
       - name: Wait for the services to be ready
         run: |
