@@ -34,10 +34,7 @@ jobs:
           sudo apt-get install -y docker-compose
 
       - name: Build Docker images with Docker Compose
-        run: docker-compose build
-
-      - name: Start Docker Compose services
-        run: docker-compose up -d assessment list  # Starte sowohl assessment als auch list
+        run: docker-compose up --build
 
       - name: Wait for the services to be ready
         run: |
@@ -64,16 +61,16 @@ jobs:
       - name: Test your application against assessment
         run: |
           echo "Executing GET request..."
-          curl -s http://localhost:7979/getCustomers  # Führe GET-Anfrage aus
+          response_get=$(curl -s http://localhost:7979/getCustomers)  # Führe GET-Anfrage aus
+          echo "GET Response: $response_get"  # Ausgabe der GET-Antwort
           
           echo "Executing POST request..."
-          # Hier verwenden wir localhost anstelle von host.docker.internal
-          response=$(curl -X POST http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
-          echo "POST Response: $response"  # Ausgabe der Antwort
+          response_post=$(curl -X POST -s http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
+          echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
 
           # Hier die Bedingung anpassen, um die Ausgabe zu überprüfen
-          if [[ "$response" == *"expecting to see 75 customers but found 0"* ]]; then
-            echo "Assessment Test fehlgeschlagen: $response"
+          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
+            echo "Assessment Test fehlgeschlagen: $response_post"
             exit 1
           fi
 
