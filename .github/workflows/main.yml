@@ -28,13 +28,13 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Pull Docker images
+      - name: Build Docker images
         run: |
-          # Ziehe das Docker-Image für den Assessment-Service
-          docker pull mrksdh/assessment
-          
-          # Ziehe das Docker-Image für den List-Service (bitte entsprechend anpassen)
-          docker pull your_list_image  # Ersetze durch den tatsächlichen Namen des List-Service-Images
+          # Baue das Docker-Image für den Assessment-Service
+          docker build -t mrksdh/assessment .  # Hier wird der aktuelle Kontext verwendet, also das Verzeichnis mit dem Dockerfile.
+
+          # Baue das Docker-Image für den List-Service, wenn sich das Dockerfile im selben Verzeichnis befindet
+          docker build -t your_actual_list_image_name ./path/to/list-service  # Hier den tatsächlichen Pfad zum Dockerfile für den List-Service anpassen.
 
       - name: Start Docker containers
         run: |
@@ -42,7 +42,7 @@ jobs:
           docker run -d --name assessment -p 8080:8080 mrksdh/assessment
           
           # Starte den List-Service
-          docker run -d --name list -p 7979:7979 your_list_image  # Ersetze durch den tatsächlichen Namen des List-Service-Images
+          docker run -d --name list -p 7979:7979 your_actual_list_image_name  # Ersetze durch den tatsächlichen Namen des List-Service-Images
 
       - name: Wait for the services to be ready
         run: |
@@ -74,6 +74,18 @@ jobs:
           
           echo "Executing POST request..."
           response_post=$(curl -X POST -s http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
+          echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
+
+          # Überprüfe die Antwort des POST-Requests
+          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
+            echo "Assessment Test fehlgeschlagen: $response_post"
+            exit 1
+          fi
+
+      - name: Shut down Docker containers
+        run: |
+          docker stop assessment list  # Stoppe die Container
+          docker rm assessment list  # Entferne die Container
           echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
 
           # Überprüfe die Antwort des POST-Requests
