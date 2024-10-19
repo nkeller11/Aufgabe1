@@ -23,43 +23,54 @@ jobs:
           distribution: 'temurin'
 
       - name: Set permissions for gradlew
-        run: chmod +x ./gradlew  # Setze die Berechtigungen für das Gradle Wrapper-Skript
+        run: chmod +x ./gradlew  # Set the permissions for the Gradle Wrapper script
 
       - name: Build with Gradle
         run: ./gradlew build
 
       - name: Build your application Docker image
         run: |
-          # Baue das Docker-Image unter Verwendung des spezifizierten Dockerfile-Namens
+          # Build the Docker image using the specified Dockerfile name
           docker build -t your-app-image -f Dockerfile.dockerfile .
           docker build -t your-app-image -f Dockerfile .
+
       - name: Run your application
         run: |
-          # Starte die Anwendung im Hintergrund
+          # Start the application in the background
           docker run -d --name your-app -p 7979:7979 your-app-image
+
       - name: Wait for your application to start
         run: |
-          echo "Warte 10 Sekunden, bis die Anwendung bereit ist..."
+          echo "Waiting 10 seconds for the application to be ready..."
           sleep 10
+
       - name: Run Assessment Docker Image
         run: |
-          # Starte das Docker-Image mrksdh/assessment
+          # Start the Docker image mrksdh/assessment
           docker run -d --name assessment -p 8080:8080 mrksdh/assessment
+
       - name: Wait for assessment to be ready
         run: |
-          echo "Warte 10 Sekunden, bis das Assessment bereit ist..."
+          echo "Waiting 10 seconds for the assessment to be ready..."
           sleep 10
+
       - name: Test your application against assessment
         run: |
-          # Teste deine Anwendung, indem du mit dem Assessment-Image interagierst
-          curl -X POST http://localhost:8081/v1/result -d '{}' || echo "Assessment Test fehlgeschlagen"
+          # Test your application by interacting with the assessment image
+          response_post=$(curl -s -X POST http://localhost:8080/v1/result -d '{}')
+          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
+            echo "Assessment Test failed: $response_post"
+            exit 1
+          fi
+
       - name: Shut down your application
-        run: docker stop your-app && docker rm your-app
+        run: |
+          docker stop your-app && docker rm your-app
 
       - name: Shut down the assessment container
-        run: docker stop assessment && docker rm assessmentST-Requests
-          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
-            echo "Assessment Test fehlgeschlagen: $response_post"
+        run: |
+          docker stop assessment && docker rm assessment
+: $response_post"
             exit 1
           fi
 
