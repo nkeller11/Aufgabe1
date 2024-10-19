@@ -43,12 +43,22 @@ jobs:
           echo "Waiting 10 seconds for the application to be ready..."
           sleep 10
 
+      - name: Retrieve and post customer data
+        run: |
+          # Retrieve customer data from the application
+          customer_data=$(curl -L -s http://list:7979/getCustomers)
+          echo "Retrieved customer data: $customer_data"  # Log the retrieved customer data
+
+          # Post customer data to your application's postCustomerData endpoint
+          response_post=$(curl -X POST -L -s http://list:7979/postCustomerData -d "$customer_data")
+          echo "Response from postCustomerData: $response_post"  # Log the response for debugging
+
       - name: Test your application against assessment
         run: |
           # Test your application by interacting with the assessment image
-          response_post=$(curl -s -X POST http://localhost:8080/v1/result -d '{}')
-          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
-            echo "Assessment Test failed: $response_post"
+          response_assessment=$(curl -s -X POST http://assessment:8080/v1/result -d '{}')  # Use service name
+          if [[ "$response_assessment" == *"expecting to see 75 customers but found 0"* ]]; then
+            echo "Assessment Test failed: $response_assessment"
             exit 1
           fi
 
