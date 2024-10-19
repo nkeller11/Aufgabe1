@@ -66,7 +66,7 @@ public class CustomerProcessor {
     }
 
     @GetMapping("/getCustomers")
-    public ResponseEntity<Map<String, List<Customer>>> getCustomers() {
+    public ResponseEntity<List<Customer>> getCustomers() {
         try {
             customers.clear();
             // Daten von der externen Quelle abrufen
@@ -85,18 +85,19 @@ public class CustomerProcessor {
                 customers.add(customer);
             }
 
-            // Customer-Liste zurückgeben
-            //return ResponseEntity.ok(customers);
-            Map<String, List<Customer>> antwort= new HashMap<>();
-            antwort.put("events", customers);
-            return ResponseEntity.ok(antwort);
+            // Sortiere die Kundenliste nach timestamp (aufsteigend)
+            customers.sort(Comparator.comparingLong(Customer::getTimestamp));
+
+            return ResponseEntity.ok(customers);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
         }
     }
 
+
     @PostMapping("/postCustomerData")
-    public ResponseEntity<Map<String, List<CustomerPost>>> postCustomerData(@RequestBody List<Customer> customers) {
+    public ResponseEntity<Map<String, List<CustomerPost>>> postCustomerData() {
+        // Überprüfen, ob die Kundenliste leer ist
         if (customers == null || customers.isEmpty()) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("result", Collections.singletonList(new CustomerPost("Error", 0))));
         }
@@ -108,7 +109,7 @@ public class CustomerProcessor {
         List<CustomerPost> results = new ArrayList<>();
 
         // Maps zur Speicherung von Start- und Stop-Zeitpunkten
-        Map<String, Long> startTimestamps = new HashMap<>(); // Korrigierter Name
+        Map<String, Long> startTimestamps = new HashMap<>();
 
         // Events pro workloadId durchlaufen und Verbrauch berechnen
         for (Customer customer : customers) {
@@ -135,6 +136,7 @@ public class CustomerProcessor {
         response.put("result", results);
         return ResponseEntity.ok(response);
     }
+
 
     // Verbrauchsberechnungsmethode, die den Zeitunterschied zwischen Start und Stop berechnet
     private long calculateConsumption(Long startTimestamp, Long stopTimestamp) {

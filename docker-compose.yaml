@@ -6,10 +6,8 @@ services:
       - "7979:7979"  # Port 7979 für den List-Service
     environment:
       - SERVER_PORT=7979
-      - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst
-      - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Dataset-Dienst
-
-
+      - DATASET_SERVICE_URL=http://host.docker.internal:8080/v1/dataset  # URL für den Dataset-Dienst
+      - RESULT_SERVICE_URL=http://host.docker.internal:8080/v1/result  # URL für den Dataset-Dienst
     networks:
       - example
     healthcheck:
@@ -19,13 +17,6 @@ services:
       start_period: 2s
       retries: 5
 
-  assessment:  # Hier ist der Dataset-Dienst
-    image: mrksdh/assessment
-    ports:
-      - "8080:8080"  # Port Mapping für den Assessment-Service
-    networks:
-      - example
-
   curl:
     image: curlimages/curl
     depends_on:
@@ -33,7 +24,13 @@ services:
         condition: service_healthy
     networks:
       - example
-    command: ["curl", "-L", "-v", "http://list:7979/getCustomers"]
+    command: >
+      sh -c "
+        echo 'Executing GET request...';
+        curl -L -v http://list:7979/getCustomers &&
+        echo 'Executing POST request...' &&
+        curl -X POST -L -v http://list:7979/postCustomerData
+      "
 
 networks:
   example:
