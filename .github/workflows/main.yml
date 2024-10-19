@@ -64,16 +64,16 @@ jobs:
       - name: Test your application against assessment
         run: |
           echo "Executing GET request..."
-          curl -s http://list:7979/getCustomers  # Führe GET-Anfrage aus
+          response_get=$(curl -s http://localhost:7979/getCustomers)  # Führe GET-Anfrage aus
+          echo "GET Response: $response_get"  # Ausgabe der GET-Antwort
           
           echo "Executing POST request..."
-          # POST-Anfrage an die korrekte URL
-          response=$(curl -X POST http://list:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
-          echo "POST Response: $response"  # Ausgabe der Antwort
+          response_post=$(curl -X POST -s http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
+          echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
 
           # Hier die Bedingung anpassen, um die Ausgabe zu überprüfen
-          if [[ "$response" == *"expecting to see 75 customers but found 0"* ]]; then
-            echo "Assessment Test fehlgeschlagen: $response"
+          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
+            echo "Assessment Test fehlgeschlagen: $response_post"
             exit 1
           fi
 
