@@ -23,7 +23,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Set permissions for gradlew
-        run: chmod +x ./gradlew  # Setze die Berechtigungen für das Gradle Wrapper-Skript
+        run: chmod +x ./gradlew  # Set the permissions for the Gradle Wrapper script
 
       - name: Build with Gradle
         run: ./gradlew build
@@ -33,46 +33,36 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      - name: Build Docker images with Docker Compose
-        run: docker-compose up --build
-
-      - name: Wait for the services to be ready
+      - name: Build and start your application and services defined in docker-compose.yml
         run: |
-          echo "Warte auf den Assessment-Service, bis er bereit ist..."
-          for i in {1..10}; do
-              if curl -s http://localhost:8080/v1/dataset; then
-                echo "Assessment-Service ist bereit."
-                break
-              fi
-              echo "Warte auf den Assessment-Service..."
-              sleep 10
-          done
+          # Build and start your application and services
+          docker-compose up -d --build  # Start services in detached mode and build images if necessary
 
-          echo "Warte auf den List-Service, bis er bereit ist..."
-          for i in {1..10}; do
-              if curl -s http://localhost:7979/getCustomers; then
-                echo "List-Service ist bereit."
-                break
-              fi
-              echo "Warte auf den List-Service..."
-              sleep 10
-          done
+      - name: Wait for your application to start
+        run: |
+          echo "Waiting 10 seconds for the application to be ready..."
+          sleep 10
+
+      - name: Retrieve and post customer data
+        run: |
+          # Retrieve customer data from the application
+          customer_data=$(curl -L -s http://localhost:7979/getCustomers)
+          echo "Retrieved customer data: $customer_data"  # Log the retrieved customer data
+
+          # Post customer data to your application's postCustomerData endpoint
+          response_post=$(curl -X POST -L -s http://localhost:7979/postCustomerData -d "$customer_data")
+          echo "Response from postCustomerData: $response_post"  # Log the response for debugging
 
       - name: Test your application against assessment
         run: |
-          echo "Executing GET request..."
-          response_get=$(curl -s http://localhost:7979/getCustomers)  # Führe GET-Anfrage aus
-          echo "GET Response: $response_get"  # Ausgabe der GET-Antwort
-          
-          echo "Executing POST request..."
-          response_post=$(curl -X POST -s http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
-          echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
-
-          # Hier die Bedingung anpassen, um die Ausgabe zu überprüfen
-          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
-            echo "Assessment Test fehlgeschlagen: $response_post"
+          # Test your application by interacting with the assessment image
+          response_assessment=$(curl -s -X POST http://assessment:8080/v1/result -d '{}')  # Use service name
+          if [[ "$response_assessment" == *"expecting to see 75 customers but found 0"* ]]; then
+            echo "Assessment Test failed: $response_assessment"
             exit 1
           fi
 
-      - name: Shut down Docker Compose services
-        run: docker-compose down
+      - name: Shut down Docker containers
+        run: |
+          # Stop and remove all containers defined in docker-compose.yml
+          docker-compose down
