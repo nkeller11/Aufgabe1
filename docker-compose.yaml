@@ -1,18 +1,16 @@
 version: "3.8"
 services:
   list:
-    build: .
+    build: .  # Baue den List-Service aus dem aktuellen Verzeichnis
     ports:
       - "7979:7979"  # Port 7979 für den List-Service
     environment:
       - SERVER_PORT=7979
-      - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst im Netzwerk
-      - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Dataset-Dienst im Netzwerk
+      - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst
+      - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Result-Dienst
+
     networks:
       - example
-    depends_on:
-      assessment:  # Sicherstellen, dass assessment zuerst gestartet wird
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:7979/getCustomers || exit 1"]
       interval: 2s
@@ -20,10 +18,10 @@ services:
       start_period: 2s
       retries: 5
 
-  assessment:  # Hinzufügen des assessment-Dienstes
+  assessment:  # Hier ist der Dataset-Dienst
     image: mrksdh/assessment
     ports:
-      - "8080:8080"
+      - "8080:8080"  # Port Mapping für den Assessment-Service
     networks:
       - example
     healthcheck:
@@ -37,15 +35,17 @@ services:
     image: curlimages/curl
     depends_on:
       list:
-        condition: service_healthy
+        condition: service_healthy  # Wartet, bis der List-Service gesund ist
     networks:
       - example
     command: >
       sh -c "
-        echo 'Executing GET request...';
+        echo 'Executing GET request...' &&
         curl -L -v http://list:7979/getCustomers &&
         echo 'Executing POST request...' &&
-        curl -X POST -L -v http://list:7979/postCustomerData
+        # Füge hier die POST-Anfrage hinzu
+        response=\$(curl -X POST -L -v http://list:7979/postCustomerData -d '{}') &&
+        echo 'Assessment Response: \$response'  # Zeigt die Antwort des Assessment-Services an
       "
 
 networks:
