@@ -35,13 +35,14 @@ services:
     command: >
       sh -c "
         echo 'Executing GET request...' &&
-        curl -L -v http://list:7979/getCustomers &&
+        response_get=\$(curl -L -v http://list:7979/getCustomers) &&
+        echo 'GET Response: \$response_get' &&
         echo 'Executing POST request...' &&
-        response=\$(curl -X POST -L -v http://list:7979/postCustomerData -d '{}') &&
-        echo 'Assessment Response: \$response'  # Zeigt die Antwort des Assessment-Services an
+        response_post=\$(curl -X POST -L -v http://list:7979/postCustomerData -d '{}') &&
+        echo 'POST Response: \$response_post'
       "
+
 
 networks:
   example:
     driver: bridge
-
