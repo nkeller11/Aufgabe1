@@ -43,14 +43,13 @@ jobs:
         run: |
           echo "Warte 30 Sekunden, bis die Anwendung bereit ist..."
           sleep 30
-          # Optional: Überprüfen, ob die Anwendung bereit ist
           for i in {1..10}; do
-            if curl -s http://localhost:7979/health; then
-              echo "Anwendung ist bereit."
-              break
-            fi
-            echo "Warte auf die Anwendung..."
-            sleep 10
+              if curl -s http://localhost:7979/getCustomers; then
+          echo "Anwendung ist bereit."
+          break
+          fi
+          echo "Warte auf die Anwendung..."
+          sleep 10
           done
 
       - name: Test your application against assessment
