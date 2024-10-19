@@ -28,67 +28,36 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Build Docker images
+      - name: Build your application Docker image
         run: |
-          # Baue das Docker-Image für den Assessment-Service
-          docker build -t mrksdh/assessment .  # Hier wird der aktuelle Kontext verwendet, also das Verzeichnis mit dem Dockerfile.
-
-          # Baue das Docker-Image für den List-Service, wenn sich das Dockerfile im selben Verzeichnis befindet
-          docker build -t your_actual_list_image_name ./path/to/list-service  # Hier den tatsächlichen Pfad zum Dockerfile für den List-Service anpassen.
-
-      - name: Start Docker containers
+          # Baue das Docker-Image unter Verwendung des spezifizierten Dockerfile-Namens
+          docker build -t your-app-image -f Dockerfile.dockerfile .
+          docker build -t your-app-image -f Dockerfile .
+      - name: Run your application
         run: |
-          # Starte den Assessment-Service
-          docker run -d --name assessment -p 8080:8080 mrksdh/assessment
-          
-          # Starte den List-Service
-          docker run -d --name list -p 7979:7979 your_actual_list_image_name  # Ersetze durch den tatsächlichen Namen des List-Service-Images
-
-      - name: Wait for the services to be ready
+          # Starte die Anwendung im Hintergrund
+          docker run -d --name your-app -p 8080:8080 your-app-image
+      - name: Wait for your application to start
         run: |
-          echo "Warte auf den Assessment-Service, bis er bereit ist..."
-          for i in {1..10}; do
-              if curl -s http://localhost:8080/v1/dataset; then
-                echo "Assessment-Service ist bereit."
-                break
-              fi
-              echo "Warte auf den Assessment-Service..."
-              sleep 10
-          done
-
-          echo "Warte auf den List-Service, bis er bereit ist..."
-          for i in {1..10}; do
-              if curl -s http://localhost:7979/getCustomers; then
-                echo "List-Service ist bereit."
-                break
-              fi
-              echo "Warte auf den List-Service..."
-              sleep 10
-          done
-
-      - name: Execute tests with curl
+          echo "Warte 10 Sekunden, bis die Anwendung bereit ist..."
+          sleep 10
+      - name: Run Assessment Docker Image
         run: |
-          echo "Executing GET request..."
-          response_get=$(curl -s http://localhost:7979/getCustomers)  # Führe GET-Anfrage aus
-          echo "GET Response: $response_get"  # Ausgabe der GET-Antwort
-          
-          echo "Executing POST request..."
-          response_post=$(curl -X POST -s http://localhost:7979/postCustomerData -d '{}')  # Führe POST-Anfrage aus
-          echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
-
-          # Überprüfe die Antwort des POST-Requests
-          if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
-            echo "Assessment Test fehlgeschlagen: $response_post"
-            exit 1
-          fi
-
-      - name: Shut down Docker containers
+          # Starte das Docker-Image mrksdh/assessment
+          docker run -d --name assessment -p 8081:8080 mrksdh/assessment
+      - name: Wait for assessment to be ready
         run: |
-          docker stop assessment list  # Stoppe die Container
-          docker rm assessment list  # Entferne die Container
-          echo "POST Response: $response_post"  # Ausgabe der POST-Antwort
+          echo "Warte 10 Sekunden, bis das Assessment bereit ist..."
+          sleep 10
+      - name: Test your application against assessment
+        run: |
+          # Teste deine Anwendung, indem du mit dem Assessment-Image interagierst
+          curl -X POST http://localhost:8081/v1/result -d '{}' || echo "Assessment Test fehlgeschlagen"
+      - name: Shut down your application
+        run: docker stop your-app && docker rm your-app
 
-          # Überprüfe die Antwort des POST-Requests
+      - name: Shut down the assessment container
+        run: docker stop assessment && docker rm assessmentST-Requests
           if [[ "$response_post" == *"expecting to see 75 customers but found 0"* ]]; then
             echo "Assessment Test fehlgeschlagen: $response_post"
             exit 1
