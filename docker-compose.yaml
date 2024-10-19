@@ -1,13 +1,13 @@
 version: "3.8"
 services:
   list:
-    build: .  # Baue den List-Service aus dem aktuellen Verzeichnis
+    build: .
     ports:
       - "7979:7979"  # Port 7979 für den List-Service
     environment:
       - SERVER_PORT=7979
       - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst
-      - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Result-Dienst
+      - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Dataset-Dienst
 
     networks:
       - example
@@ -24,18 +24,12 @@ services:
       - "8080:8080"  # Port Mapping für den Assessment-Service
     networks:
       - example
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/v1/dataset || exit 1"]
-      interval: 2s
-      timeout: 5s
-      start_period: 2s
-      retries: 5
 
   curl:
     image: curlimages/curl
     depends_on:
       list:
-        condition: service_healthy  # Wartet, bis der List-Service gesund ist
+        condition: service_healthy
     networks:
       - example
     command: >
@@ -43,7 +37,6 @@ services:
         echo 'Executing GET request...' &&
         curl -L -v http://list:7979/getCustomers &&
         echo 'Executing POST request...' &&
-        # Füge hier die POST-Anfrage hinzu
         response=\$(curl -X POST -L -v http://list:7979/postCustomerData -d '{}') &&
         echo 'Assessment Response: \$response'  # Zeigt die Antwort des Assessment-Services an
       "
@@ -51,3 +44,4 @@ services:
 networks:
   example:
     driver: bridge
+
