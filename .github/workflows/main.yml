@@ -28,9 +28,14 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-      - name: Build your application Docker image using Docker Compose
+      - name: Install Docker Compose
         run: |
-          # Build and start your application and services defined in docker-compose.yml
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Build and start your application and services defined in docker-compose.yml
+        run: |
+          # Build and start your application and services
           docker-compose up -d --build  # Start services in detached mode and build images if necessary
 
       - name: Wait for your application to start
