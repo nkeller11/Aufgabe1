@@ -36,7 +36,7 @@ jobs:
       - name: Run your application
         run: |
           # Starte die Anwendung im Hintergrund
-          docker run -d --name your-app -p 8080:8080 your-app-image
+          docker run -d --name your-app -p 7979:7979 your-app-image
       - name: Wait for your application to start
         run: |
           echo "Warte 10 Sekunden, bis die Anwendung bereit ist..."
@@ -44,7 +44,7 @@ jobs:
       - name: Run Assessment Docker Image
         run: |
           # Starte das Docker-Image mrksdh/assessment
-          docker run -d --name assessment -p 8081:8080 mrksdh/assessment
+          docker run -d --name assessment -p 8080:8080 mrksdh/assessment
       - name: Wait for assessment to be ready
         run: |
           echo "Warte 10 Sekunden, bis das Assessment bereit ist..."
