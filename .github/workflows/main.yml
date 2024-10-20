@@ -1,5 +1,3 @@
-
-
 name: CI
 
 on:
@@ -48,7 +46,7 @@ jobs:
       - name: Check local container logs for HTTP 200
         run: |
           # Get logs from the local application container
-          logs=$(docker-compose logs <your-local-container-name>)
+          logs=$(docker-compose logs list)  # Überprüfe den Container-Namen
 
           # Check if HTTP/1.1 200 is present in the logs
           echo "Checking logs for 'HTTP/1.1 200'..."
@@ -58,4 +56,3 @@ jobs:
             echo "HTTP/1.1 200 not found in logs - Application might not be running correctly."
             exit 1
           fi
-
