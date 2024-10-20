@@ -43,16 +43,25 @@ jobs:
           echo "Waiting 10 seconds for the application to be ready..."
           sleep 10
 
-      - name: Check local container logs for HTTP 200
+      - name: Check output file for POST request success
         run: |
-          # Get logs from the local application container
-          logs=$(docker-compose logs list)  # Überprüfe den Container-Namen
+          # Check the output file for POST request execution and HTTP/1.1 200
+          output_file="./output/curl_output.txt"  # Pfad zur Ausgabedatei
 
-          # Check if HTTP/1.1 200 is present in the logs
-          echo "Checking logs for 'HTTP/1.1 200'..."
-          if echo "$logs" | grep -q "HTTP/1.1 200"; then
-            echo "HTTP/1.1 200 found in logs - Application is running successfully!"
+          echo "Checking the output file for the correct order of 'Executing POST request...' and 'HTTP/1.1 200'..."
+          
+          if grep -q "Executing POST request..." "$output_file" && grep -q "HTTP/1.1 200" "$output_file"; then
+            # Ensure 'Executing POST request...' comes before 'HTTP/1.1 200'
+            post_request_line=$(grep -n "Executing POST request..." "$output_file" | cut -d: -f1)
+            http200_line=$(grep -n "HTTP/1.1 200" "$output_file" | cut -d: -f1)
+
+            if [ "$post_request_line" -lt "$http200_line" ]; then
+              echo "POST request executed successfully before HTTP/1.1 200 found in output file."
+            else
+              echo "'Executing POST request...' is not before 'HTTP/1.1 200' in the output file."
+              exit 1
+            fi
           else
-            echo "HTTP/1.1 200 not found in logs - Application might not be running correctly."
+            echo "Either 'Executing POST request...' or 'HTTP/1.1 200' not found in output file."
             exit 1
           fi
