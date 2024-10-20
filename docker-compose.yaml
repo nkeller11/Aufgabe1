@@ -29,18 +29,18 @@ services:
     networks:
       - example
     command: >
-      sh -c "
-        echo 'Executing GET request...' &&
+      sh -c '
+        echo "Executing GET request..." &&
         until curl -sSf http://list:7979/getCustomers; do
-          echo 'Waiting for list service to be available...' &&
+          echo "Waiting for list service to be available..." &&
           sleep 5;
         done &&
-        echo 'GET request successful.' &&
-      
-        echo 'Executing POST request...' &&
-        response_post=\$(curl -X POST -L -v http://list:7979/postCustomerData -d '{}') &&
-        echo 'POST Response: \$response_post'
-      "
+        echo "GET request successful." &&
+
+        echo "Executing POST request..." &&
+        response_post=$(curl -X POST -L -v http://list:7979/postCustomerData -d "{}") &&
+        echo "POST Response: $response_post"
+      '
 
 networks:
   example:
