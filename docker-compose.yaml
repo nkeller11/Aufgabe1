@@ -8,39 +8,36 @@ services:
       - SERVER_PORT=7979
       - DATASET_SERVICE_URL=http://assessment:8080/v1/dataset  # URL für den Dataset-Dienst
       - RESULT_SERVICE_URL=http://assessment:8080/v1/result  # URL für den Dataset-Dienst
-
     networks:
       - example
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:7979/getCustomers || exit 1"]
-      interval: 2s
-      timeout: 5s
-      start_period: 2s
-      retries: 5
+    depends_on:
+      - assessment  # Abhängigkeit vom Assessment-Service, aber kein Healthcheck notwendig
 
-  assessment:  # Hier ist der Dataset-Dienst
+  assessment:
     image: mrksdh/assessment
     ports:
       - "8080:8080"  # Port Mapping für den Assessment-Service
     networks:
       - example
+    # Kein Healthcheck nötig, der Container wird direkt nach dem Start als funktionsfähig betrachtet
 
   curl:
     image: curlimages/curl
     depends_on:
       list:
-        condition: service_healthy
+        condition: service_started  # Bedingung: Der List-Service muss gestartet sein
     networks:
       - example
     command: >
       sh -c "
         echo 'Executing GET request...' &&
-        curl -L -v http://list:7979/getCustomers &&
-        response_get=\$(curl -L -v http://list:7979/getCustomers) &&
-        echo 'GET Response: \$response_get' &&
+        until curl -sSf http://list:7979/getCustomers; do
+          echo 'Waiting for list service to be available...' &&
+          sleep 5;
+        done &&
+        echo 'GET request successful.' &&
+      
         echo 'Executing POST request...' &&
-        response=\$(curl -X POST -L -v http://list:7979/postCustomerData -d '{}') &&
-        echo 'Assessment Response: \$response'  # Zeigt die Antwort des Assessment-Services an
         response_post=\$(curl -X POST -L -v http://list:7979/postCustomerData -d '{}') &&
         echo 'POST Response: \$response_post'
       "
@@ -48,3 +45,4 @@ services:
 networks:
   example:
     driver: bridge
+
